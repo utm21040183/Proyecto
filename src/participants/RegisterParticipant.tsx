@@ -2,14 +2,8 @@ import { Card, Container, Form, Button } from "react-bootstrap";
 import axios from "axios";
 import Swal from "sweetalert2";
 import React, { useState } from "react";
+import { IUser } from "../Types";
 
-interface IUser {
-    name: string;
-    email: string;
-    CURP: string;
-    password: string;
-    rol: string;
-}
 
 export const RegisterParticipant = () => {
     const [data, setData] = useState<IUser>({

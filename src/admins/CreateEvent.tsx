@@ -1,153 +1,120 @@
-import { Card, Container, Form, Button, Row, Col } from "react-bootstrap";
-import axios from "axios";
-import Swal from "sweetalert2";
-import React, { useState } from "react";
-
-interface IMetric {
-  description: string;
-  maxScore: string;
-}
-
-interface IEvent {
-  title: string;
-  rounds: string;
-  metrics: IMetric[];
-}
+import axios from 'axios';
+import React, { useState } from 'react' // Importa React y el hook useState para manejar el estado del componente.
+import { Button, Card, Col, Container, Form, Row } from 'react-bootstrap'; // Importa componentes de Bootstrap para diseño y funcionalidad.
+import { Trash } from 'react-bootstrap-icons';
+import Swal from 'sweetalert2';
+import { IEvent } from '../Types';
 
 export const CreateEvent = () => {
-  const [data, setData] = useState<IEvent>({
-    title: "",
-    rounds: "",
-    metrics: [{ description: "", maxScore: "" }],
-  });
-
-  const onChange = (
-    e: React.ChangeEvent<any>,
-    index?: number
-  ) => {
-    const { name, value } = e.target;
-
-    if (name.startsWith("metrics") && index !== undefined) {
-      const updatedMetrics = [...data.metrics];
-      updatedMetrics[index] = {
-        ...updatedMetrics[index],
-        [name.split(".")[1]]: value,
-      };
-      setData({ ...data, metrics: updatedMetrics });
-    } else {
-      setData({ ...data, [name]: value });
+    const emptyMetric = { // Objeto plantilla para una métrica vacía.
+        description: "",  // Descripción inicial vacía.
+        max_points: 0     // Puntos iniciales en 0.
     }
-  };
 
-  const addMetric = () => {
-    setData({
-      ...data,
-      metrics: [...data.metrics, { description: "", maxScore: "" }],
+    const [event, setEvent] = useState<IEvent>({ // Estado inicial del evento.
+        title: "",        // Título vacío.
+        maxRound: 0,      // Número de rondas inicializado en 0.
+        metrics: [emptyMetric] // Una métrica vacía por defecto.
     });
-  };
 
-  const validateForm = () => {
-    const { title, rounds, metrics } = data;
-    if (!title || !rounds || metrics.some(metric => !metric.description || !metric.maxScore)) {
-      Swal.fire(
-        "Campos incompletos",
-        "Por favor completa todos los campos del formulario.",
-        "warning"
-      );
-      return false;
+    const onChangeBasicFields = (e: React.ChangeEvent<HTMLInputElement>) => {
+        e.preventDefault();
+        const data: any = event;
+        data[e.target.name] = e.target.value;
+        setEvent({ ...data });
     }
-    return true;
-  };
 
-  const onSubmit = async () => {
-    if (!validateForm()) return;
-
-    try {
-      Swal.fire({ title: "Guardando datos", allowOutsideClick: false });
-      Swal.showLoading();
-      await axios.post("http://localhost:5000/events/create", data);
-      Swal.fire("Evento guardado con éxito", "", "success");
-    } catch (error: any) {
-      console.error(error);
-      Swal.fire(
-        "Algo salió mal",
-        error.response?.data?.msg || "Error desconocido",
-        "error"
-      );
+    const onChangeMetric = (e: React.ChangeEvent<HTMLInputElement>, i: number) => {
+        e.preventDefault();
+        const data: any = event;
+        data.metrics[i][e.target.name] = e.target.value;
+        setEvent({ ...data })
     }
-  };
 
-  return (
-    <Container>
-      <Card style={{ width: "50rem", margin: "auto" }} className="mt-3 p-4">
-        <h3>Crear evento</h3>
-        <Form>
-          {/* Título del evento */}
-          <Row className="mb-3">
-            <Col>
-              <Form.Group>
-                <Form.Label>Título del evento</Form.Label>
-                <Form.Control
-                  name="title"
-                  value={data.title}
-                  onChange={onChange}
-                />
-              </Form.Group>
-            </Col>
-            <Col>
-              <Form.Group>
-                <Form.Label>Número de rondas</Form.Label>
-                <Form.Control
-                  name="rounds"
-                  value={data.rounds}
-                  onChange={onChange}
-                />
-              </Form.Group>
-            </Col>
-          </Row>
-  
-          {/* Métricas */}
-          <h5>Métricas:</h5>
-          {data.metrics.map((metric, index) => (
-            <Row key={index} className="mb-3">
-              <Col>
-                <Form.Group>
-                  <Form.Label>Descripción:</Form.Label>
-                  <Form.Control
-                    name={`metrics.${index}.description`}
-                    value={metric.description}
-                    onChange={(e) => onChange(e, index)}
-                  />
-                </Form.Group>
-              </Col>
-              <Col>
-                <Form.Group>
-                  <Form.Label>Calificación máxima:</Form.Label>
-                  <Form.Control
-                    name={`metrics.${index}.maxScore`}
-                    value={metric.maxScore}
-                    onChange={(e) => onChange(e, index)}
-                  />
-                </Form.Group>
-              </Col>
-            </Row>
-          ))}
-  
-          {/* Botón para agregar métricas */}
-          <div className="d-flex justify-content-center mb-3">
-            <Button variant="info" onClick={addMetric} className="me-2">
-              Agregar métrica
-            </Button>
-          </div>
-  
-          {/* Botón para guardar */}
-          <div className="d-flex justify-content-center mt-3">
-            <Button variant="primary" onClick={onSubmit}>
-              Guardar evento
-            </Button>
-          </div>
-        </Form>
-      </Card>
-    </Container>
-  );
-}  
+    const addMetric = () => { // Función para agregar una métrica nueva al evento.
+        const data = event;  // Copia del estado actual del evento.
+        data.metrics.push(emptyMetric); // Añade una métrica vacía al arreglo de métricas.
+        setEvent({ ...data }) // Actualiza el estado con la nueva métrica añadida.
+    }
+
+    const removeMetric = (iM: number) => { // Función para eliminar una métrica específica.
+        const data = event;
+        const metricsFiltered = data.metrics.filter((_, i) => i != iM) // Filtra las métricas, excluyendo la seleccionada.
+        data.metrics = metricsFiltered
+        setEvent({ ...data }); // Actualiza el estado con la lista modificada.
+    }
+
+    const onSubmit = async () => {
+        try {
+            Swal.fire("Guardando evento...");
+            Swal.showLoading
+            await axios.post("http://localhost:4000/event/create", event)
+            Swal.fire("Evento registrado con éxito", "", "success")
+        } catch (error) {
+
+        }
+    }
+
+    return ( // Renderiza el componente.
+        <Container> {/* Contenedor principal para centrar el contenido */}
+            <Card className='m-3'> {/* Tarjeta para agrupar los elementos */}
+                <Card.Body> {/* Cuerpo de la tarjeta */}
+                    <Card.Title>Crear evento</Card.Title> {/* Título de la tarjeta */}
+                    <Form> {/* Formulario para ingresar los datos del evento */}
+                        <Row className='mb-3'> {/* Fila para los campos del título y número de rondas */}
+                            <Col>
+                                <Form.Group> {/* Grupo de formulario para el título */}
+                                    <Form.Label>Titulo del evento</Form.Label> {/* Etiqueta del campo */}
+                                    <Form.Control onChange={onChangeBasicFields} name="title" /> {/* Campo para ingresar el título */}
+                                </Form.Group>
+                            </Col>
+                            <Col>
+                                <Form.Group> {/* Grupo de formulario para el número de rondas */}
+                                    <Form.Label>Numero de rondas</Form.Label> {/* Etiqueta del campo */}
+                                    <Form.Control onChange={onChangeBasicFields} name="maxRound" type='number' /> {/* Campo numérico para ingresar las rondas */}
+                                </Form.Group>
+                            </Col>
+                        </Row>
+                        <Row> {/* Fila para las métricas */}
+                            <Form.Group className='text-center'> {/* Grupo centrado para las métricas */}
+                                <Form.Label>Metricas:</Form.Label> {/* Etiqueta del grupo de métricas */}
+                                {
+                                    event.metrics.map((metric, i) => ( // Itera sobre el arreglo de métricas.
+                                        <Row className='mb-3' key={i}> {/* Fila para cada métrica */}
+                                            <Col>
+                                                <Form.Label>Descripción:</Form.Label> {/* Etiqueta de la descripción */}
+                                                <Form.Control onChange={(e: any) => onChangeMetric(e, i)} name="description" /> {/* Campo para ingresar la descripción */}
+                                            </Col>
+                                            <Col>
+                                                <Form.Label>Calificación maxima:</Form.Label> {/* Etiqueta para los puntos */}
+                                                <Form.Control onChange={(e: any) => onChangeMetric(e, i)} type='number' name="max_points" /> {/* Campo numérico para los puntos */}
+                                            </Col>
+                                            {
+                                                event.metrics.length > 1 && (
+
+                                                    <Col xs={1}>
+                                                        <Button onClick={() => removeMetric(i)} variant='danger'>
+                                                            <Trash />
+                                                        </Button>
+                                                    </Col>
+                                                )
+                                            }
+
+                                        </Row>
+                                    ))
+                                }
+                                <div className='text-center'> {/* Botón centrado para agregar métricas */}
+                                    <Button variant='info' onClick={() => addMetric()}>Agregar metrica</Button> {/* Botón que llama a addMetric */}
+                                </div>
+                            </Form.Group>
+                        </Row>
+                        <hr></hr> {/* Línea divisoria */}
+                        <div className='text-center'> {/* Botón centrado para guardar el evento */}
+                            <Button onClick={() => onSubmit()}>Guardar evento</Button> {/* Botón de acción principal */}
+                        </div>
+                    </Form>
+                </Card.Body>
+            </Card>
+        </Container>
+    )
+}

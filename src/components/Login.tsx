@@ -56,7 +56,7 @@ export const Login = () => {
 
                     <Row className="text-center">
                         <Col>
-                            Olvidaste tu contrasena? Recuperala aqui <a> aqui </a>
+                            Olvidaste tu contrasena? Recuperala<a> aqui </a>
                         </Col>
                         <Col>
                             Todavia no tienes cuenta? Registrate aqui <a href="/register"> aqui </a>
